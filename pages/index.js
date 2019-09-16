@@ -1,28 +1,92 @@
-import App from '../components/App'
-import InfoBox from '../components/InfoBox'
-import Header from '../components/Header'
-import Submit from '../components/Submit'
-import PostList from '../components/PostList'
-import { withApollo } from '../lib/apollo'
+import React from "react";
+import { useQuery } from "@apollo/react-hooks";
+import gql from "graphql-tag";
+import { SettingsMinor } from "@shopify/polaris-icons";
+import {
+  Page,
+  EmptyState,
+  Card,
+  ResourceList,
+  SkeletonBodyText,
+  SkeletonDisplayText,
+  TextContainer
+} from "@shopify/polaris";
 
-const IndexPage = props => (
-  <App>
-    <Header />
-    <InfoBox>
-      ℹ️ This example shows how to fetch all initial apollo queries on the
-      server. If you <a href='/'>reload</a> this page you won't see a loader
-      since Apollo fetched all needed data on the server. This prevents{' '}
-      <a
-        href='https://nextjs.org/blog/next-9#automatic-static-optimization'
-        target='_blank'
+import { ReviewListItem, App } from "../components";
+import { withApollo } from "../apollo/client";
+
+const ReviewsQuery = gql`
+  query ReviewsQuery {
+    reviews {
+      id
+      title
+      status
+      date
+      customer {
+        name
+      }
+      product {
+        name
+      }
+    }
+  }
+`;
+
+function ReviewList() {
+  const {
+    networkStatus,
+    loading,
+    data: { reviews }
+  } = useQuery(ReviewsQuery, { notifyOnNetworkStatusChange: true });
+
+  const loadingStateContent =
+    networkStatus === 1 ? (
+      <Card sectioned>
+        <TextContainer>
+          <SkeletonDisplayText size="small" />
+          <SkeletonBodyText />
+          <SkeletonBodyText />
+        </TextContainer>
+      </Card>
+    ) : null;
+
+  const emptyStateContent =
+    !loading && reviews && reviews.length === 0 ? (
+      <EmptyState
+        heading="You haven't received any reviews yet"
+        action={{ content: "Configure settings", url: "/settings" }}
+        image="/review-empty-state.svg"
       >
-        automatic static optimization
-      </a>{' '}
-      in favour of full Server-Side-Rendering.
-    </InfoBox>
-    <Submit />
-    <PostList />
-  </App>
-)
+        <p>Once you have received reviews they will display on this page.</p>
+      </EmptyState>
+    ) : null;
 
-export default withApollo(IndexPage)
+  const reviewsIndex =
+    reviews && reviews.length > 0 ? (
+      <Card>
+        <ResourceList
+          showHeader
+          items={reviews}
+          resourceName={{ singular: "review", plural: "reviews" }}
+          renderItem={(review, id, index) => <ReviewListItem {...review} />}
+        />
+      </Card>
+    ) : null;
+
+  return (
+    <App>
+      <Page
+        title="Product reviews"
+        secondaryActions={[
+          { icon: SettingsMinor, content: "Settings", url: "/settings" }
+        ]}
+      >
+        {loadingStateContent}
+        {emptyStateContent}
+        {reviewsIndex}
+      </Page>
+    </App>
+  );
+}
+
+export default withApollo(ReviewList);
