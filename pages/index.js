@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
+import { gql } from "apollo-server-micro";
 import { SettingsMinor } from "@shopify/polaris-icons";
 import {
   Page,
@@ -12,7 +12,7 @@ import {
   TextContainer
 } from "@shopify/polaris";
 
-import { ReviewListItem, App } from "../components";
+import { ReviewListItem } from "../components";
 import { withApollo } from "../apollo/client";
 
 const ReviewsQuery = gql`
@@ -33,22 +33,30 @@ const ReviewsQuery = gql`
 `;
 
 function ReviewList() {
-  const {
-    networkStatus,
-    loading,
-    data: { reviews }
-  } = useQuery(ReviewsQuery, { notifyOnNetworkStatusChange: true });
+  const { networkStatus, loading, data } = useQuery(ReviewsQuery, {
+    notifyOnNetworkStatusChange: true
+  });
 
-  const loadingStateContent =
-    networkStatus === 1 ? (
-      <Card sectioned>
-        <TextContainer>
-          <SkeletonDisplayText size="small" />
-          <SkeletonBodyText />
-          <SkeletonBodyText />
-        </TextContainer>
-      </Card>
-    ) : null;
+  if (loading || networkStatus === 1) {
+    return (
+      <Page
+        title="Product reviews"
+        secondaryActions={[
+          { icon: SettingsMinor, content: "Settings", url: "/settings" }
+        ]}
+      >
+        <Card sectioned>
+          <TextContainer>
+            <SkeletonDisplayText size="small" />
+            <SkeletonBodyText />
+            <SkeletonBodyText />
+          </TextContainer>
+        </Card>
+      </Page>
+    );
+  }
+
+  const { reviews } = data;
 
   const emptyStateContent =
     !loading && reviews && reviews.length === 0 ? (
@@ -74,18 +82,15 @@ function ReviewList() {
     ) : null;
 
   return (
-    <App>
-      <Page
-        title="Product reviews"
-        secondaryActions={[
-          { icon: SettingsMinor, content: "Settings", url: "/settings" }
-        ]}
-      >
-        {loadingStateContent}
-        {emptyStateContent}
-        {reviewsIndex}
-      </Page>
-    </App>
+    <Page
+      title="Product reviews"
+      secondaryActions={[
+        { icon: SettingsMinor, content: "Settings", url: "/settings" }
+      ]}
+    >
+      {emptyStateContent}
+      {reviewsIndex}
+    </Page>
   );
 }
 

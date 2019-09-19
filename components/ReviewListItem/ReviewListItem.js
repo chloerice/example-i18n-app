@@ -7,7 +7,8 @@ import {
   TextStyle
 } from "@shopify/polaris";
 
-import styles from "./ReviewListItem.scss";
+import styles from "./ReviewListItem.css";
+import { loadGetInitialProps } from "next/dist/next-server/lib/utils";
 
 function ReviewListItem({
   id,
@@ -21,7 +22,9 @@ function ReviewListItem({
   const badgeContent = status === "published" ? "Published" : "Unpublished";
   const badgeStatus = status === "published" ? "success" : "attention";
   const badge = <Badge status={badgeStatus}>{badgeContent}</Badge>;
-  const media = <Avatar customer name={customer.name} />;
+  const media = (
+    <Avatar initials={customer.initials} customer name={customer.name} />
+  );
 
   return (
     <ResourceItem id={id} url={`/reviews/${id}`} media={media} {...rest}>

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import gql from "graphql-tag";
+import { gql } from "apollo-server-micro";
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import {
   Card,
@@ -16,7 +16,6 @@ import {
 } from "@shopify/polaris";
 
 import { withApollo } from "../apollo/client";
-import { App } from "../components";
 
 const SettingsQuery = gql`
   query SettingsQuery {
@@ -47,17 +46,61 @@ const UpdateSettings = gql`
 `;
 
 function Settings() {
-  const [autoPublish, setAutoPublish] = useState(false);
-  const [email, setEmail] = useState("");
-  const [emailNotifications, setEmailNotifications] = useState(false);
-  const [emailError, setEmailError] = useState(false);
-  const {
-    data: { settings },
-    loading,
-    networkStatus
-  } = useQuery(SettingsQuery, { notifyOnNetworkStatusChange: true });
+  const { data, loading, networkStatus } = useQuery(SettingsQuery, {
+    notifyOnNetworkStatusChange: true
+  });
 
+  if (loading || networkStatus === 1) {
+    return (
+      <Form onSubmit={handleFormSubmit}>
+        <Page
+          title="Settings"
+          breadcrumbs={[{ content: "Product reviews", url: "/" }]}
+          primaryAction={{
+            content: "Save",
+            submit: true,
+            disabled: emailError
+          }}
+        >
+          <Layout>
+            <Layout.AnnotatedSection
+              title="Auto publish"
+              description="Automatically check new reviews for spam and then publish them."
+            >
+              <Card sectioned>
+                <TextContainer>
+                  <SkeletonDisplayText size="small" />
+                  <SkeletonBodyText />
+                </TextContainer>
+              </Card>
+            </Layout.AnnotatedSection>
+            <Layout.AnnotatedSection
+              title="Email settings"
+              description="Choose if you want to receive email notifications for each review."
+            >
+              <Card sectioned>
+                <TextContainer>
+                  <SkeletonDisplayText size="small" />
+                  <SkeletonBodyText />
+                </TextContainer>
+              </Card>
+            </Layout.AnnotatedSection>
+          </Layout>
+        </Page>
+      </Form>
+    );
+  }
+
+  const { settings } = data;
   const [updateSettings] = useMutation(UpdateSettings);
+  const [autoPublish = settings.autoPublish, setAutoPublish] = useState(false);
+  const [email = settings.email, setEmail] = useState("");
+  const [
+    emailNotifications = settings.emailNotifications,
+    setEmailNotifications
+  ] = useState(false);
+
+  const [emailError, setEmailError] = useState(false);
 
   const handleAutoPublishChange = useCallback(value => {
     setAutoPublish(value[0] === "enabled");
@@ -102,33 +145,6 @@ function Settings() {
   });
 
   // While the data loads during our GraphQL request, we render skeleton content to signify to the merchant that page data is on its way.
-  const loadingStateContent =
-    networkStatus === 1 ? (
-      <Layout>
-        <Layout.AnnotatedSection
-          title="Auto publish"
-          description="Automatically check new reviews for spam and then publish them."
-        >
-          <Card sectioned>
-            <TextContainer>
-              <SkeletonDisplayText size="small" />
-              <SkeletonBodyText />
-            </TextContainer>
-          </Card>
-        </Layout.AnnotatedSection>
-        <Layout.AnnotatedSection
-          title="Email settings"
-          description="Choose if you want to receive email notifications for each review."
-        >
-          <Card sectioned>
-            <TextContainer>
-              <SkeletonDisplayText size="small" />
-              <SkeletonBodyText />
-            </TextContainer>
-          </Card>
-        </Layout.AnnotatedSection>
-      </Layout>
-    ) : null;
 
   const autoPublishSelected = autoPublish ? ["enabled"] : ["disabled"];
 
@@ -187,22 +203,19 @@ function Settings() {
 
   // We wrap our page component in a form component that handles form submission for the whole page. We could also handle submittal with the onClick event of the save button. Either approach works fine.
   return (
-    <App>
-      <Form onSubmit={handleFormSubmit}>
-        <Page
-          title="Settings"
-          breadcrumbs={[{ content: "Product reviews", url: "/" }]}
-          primaryAction={{
-            content: "Save",
-            submit: true,
-            disabled: emailError
-          }}
-        >
-          {loadingStateContent}
-          {settingsFormContent}
-        </Page>
-      </Form>
-    </App>
+    <Form onSubmit={handleFormSubmit}>
+      <Page
+        title="Settings"
+        breadcrumbs={[{ content: "Product reviews", url: "/" }]}
+        primaryAction={{
+          content: "Save",
+          submit: true,
+          disabled: emailError
+        }}
+      >
+        {settingsFormContent}
+      </Page>
+    </Form>
   );
 }
 

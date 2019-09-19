@@ -1,7 +1,7 @@
 import { Icon } from "@shopify/polaris";
 import { StarFilledMinor, StarOutlineMinor } from "@shopify/polaris-icons";
 
-import styles from "./Rating.scss";
+import styles from "./Rating.css";
 
 export default function Rating(props) {
   const { value } = props;
