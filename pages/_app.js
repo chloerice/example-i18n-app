@@ -3,17 +3,16 @@ import Head from "next/head";
 import Link from "next/link";
 import Cookies from "js-cookie";
 import ApolloClient from "apollo-boost";
-// removed the ApolloProvider because it seemingly is doing nothing, may need to add back once I query from the Shopify GraphQL API
-// import { ApolloProvider } from "@apollo/react-hooks";
+import { ApolloProvider } from "@apollo/react-hooks";
 import { Provider as AppBridgeProvider } from "@shopify/app-bridge-react";
 import { AppProvider as PolarisProvider } from "@shopify/polaris";
 import en from "@shopify/polaris/locales/en.json";
 
-// const client = new ApolloClient({
-//   fetchOptions: {
-//     credentials: "include"
-//   }
-// });
+const client = new ApolloClient({
+  fetchOptions: {
+    credentials: "include"
+  }
+});
 
 function CustomLink({ children, url, ...rest }) {
   return (
@@ -44,7 +43,9 @@ class MyApp extends App {
         </Head>
         <AppBridgeProvider config={config}>
           <PolarisProvider i18n={en} linkComponent={CustomLink}>
-            <Component {...pageProps} />
+            <ApolloProvider client={client}>
+              <Component {...pageProps} />
+            </ApolloProvider>
           </PolarisProvider>
         </AppBridgeProvider>
       </React.Fragment>
